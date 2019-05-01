@@ -1,7 +1,7 @@
 # ProjectPhrasebook
 Final Fantasy II (FC) Randomizer Project
 
-This is currently in development. The README.md will be updated eventually.
+This is currently in development. The README.md will be updated constantly throughout the development period.
 
 ## Features in development
 
