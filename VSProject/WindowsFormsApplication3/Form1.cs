@@ -16,11 +16,14 @@ namespace WindowsFormsApplication3
     {
 
         private string ff2rom = "null";
-        private byte[] byteCheck = new byte[] {78, 69, 83, 26, 16, 0, 18, 0};
+        private byte[] byteCheck = new byte[] { 78, 69, 83, 26, 16, 0, 18, 0 };
         private byte[] byteRead = new byte[8];
 
         private OpenFileDialog ofd1;
-        private Random r = new Random();
+        private Random seedGen = new Random();
+        private int seed = 0;
+        private Random r;
+        private string filename;
         public Form1()
         {
             InitializeComponent();
@@ -56,38 +59,57 @@ namespace WindowsFormsApplication3
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if(ff2rom != "null")
+            if (ff2rom != "null")
             {
+                if (seed == 0)
+                {
+                    seed = seedGen.Next();
+                    
+                }
+                r = new Random(seed);
+                //
+                filename = Path.GetDirectoryName(ff2rom) + "\\"+seed+"-FF2Randomizer.nes";
+                File.Copy(ff2rom, filename, true);
+                //
                 if (checkBox1.Checked)
                 {
-                    RandomizeShop(0x03861D, 1); //Randomize Altair Weapon Shop
-                    RandomizeShop(0x038625, 2); //Randomize Altair Armor Shop
-                    RandomizeShop(0x03862D, 3); //Randomize Altair Magic Shop 
-                    RandomizeShop(0x0386DD, 0); //Randomize Item Shop 1
-                    RandomizeShop(0x0386E5, 0); //Randomize Item Shop 2
-                    RandomizeShop(0x0386ED, 0); //Randomize Item Shop 3
+                    foreach (int i in RandomizerData.iShopLocs) RandomizeShop(i, 0);
+                    foreach (int i in RandomizerData.wShopLocs) RandomizeShop(i, 1);
+                    foreach (int i in RandomizerData.aShopLocs) RandomizeShop(i, 2);
+                    foreach (int i in RandomizerData.mShopLocs) RandomizeShop(i, 3);
+
                 }
                 else {
-                    RandomizeShop(0x03861D); //Randomize Altair Weapon Shop
-                    RandomizeShop(0x038625); //Randomize Altair Armor Shop
-                    RandomizeShop(0x03862D); //Randomize Altair Magic Shop 
-                    RandomizeShop(0x0386DD); //Randomize Item Shop 1
-                    RandomizeShop(0x0386E5); //Randomize Item Shop 2
-                    RandomizeShop(0x0386ED); //Randomize Item Shop 3
+                    foreach (int i in RandomizerData.iShopLocs) RandomizeShop(i);
+                    foreach (int i in RandomizerData.wShopLocs) RandomizeShop(i);
+                    foreach (int i in RandomizerData.aShopLocs) RandomizeShop(i);
+                    foreach (int i in RandomizerData.mShopLocs) RandomizeShop(i);
+                }
+                if (checkBox2.Checked)
+                {
+                    using (var stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite))
+                    {
+                        stream.Position = 0x0AF4; //Load ROM at Specified Position (Airship Info)
+                        stream.WriteByte(0x04); //Set Airship flag
+                        stream.WriteByte(0x5B); //Set Airship X
+                        stream.WriteByte(0x76); //Set Airship Y
+                        stream.Position = 0x038c69;
+                        stream.WriteByte(0x60); //Replaces Confirm on Cid's Assistant with an RTS to prevent overwriting the ship.
+                    }
                 }
             }
         }
         private void RandomizeShop(int position)
         {
-            using (var stream = new FileStream(ff2rom, FileMode.Open, FileAccess.ReadWrite))
+            using (var stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite))
             {
                 stream.Position = position; //Load ROM at Specified Position (Shop)
                 for (int j = 0; j < 4; j++) //For Each Shop Item
                 {
-                    int i = 2 * r.Next(0, 0x80); //Pick Random Item
+                    int i = 2 * r.Next(0, 0xA8); //Pick Random Item
                     stream.WriteByte(RandomizerData.items[i]); //Set Item Byte
                     stream.WriteByte(RandomizerData.items[i + 1]); //Set Price Byte
-                } 
+                }
             }
         }
         private bool ConfirmROM(string ff2rom)
@@ -97,7 +119,7 @@ namespace WindowsFormsApplication3
             {
                 stream.Position = 0;
                 stream.Read(byteRead, 0, 8);
-                for (int i = 0; i<8; i++)
+                for (int i = 0; i < 8; i++)
                 {
                     if (byteRead[i] != byteCheck[i]) return false;
                 }
@@ -116,19 +138,19 @@ namespace WindowsFormsApplication3
                     break;
                 case 1: //Weapon
                     min = 0x1E;
-                    max = 0x54;
+                    max = 0x52;
                     break;
                 case 2: //Armor
-                    min = 0x54;
-                    max = 0x85;
+                    min = 0x52;
+                    max = 0x81;
                     break;
                 case 3: //Magic
-                    min = 0x85;
-                    max = 0xB0;
+                    min = 0x81;
+                    max = 0xA8;
                     break;
                 default: break;
             }
-            using (var stream = new FileStream(ff2rom, FileMode.Open, FileAccess.ReadWrite))
+            using (var stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite))
             {
                 stream.Position = position; //Load ROM at Specified Position (Shop)
                 for (int j = 0; j < 4; j++) //For Each Shop Item
