@@ -46,7 +46,7 @@ namespace WindowsFormsApplication3
                         MessageBoxButtons button = MessageBoxButtons.OK;
                         MessageBox.Show(messageBoxText, caption, button, icon);
                     }
-                    label1.Text = ff2rom;
+                    else label1.Text = ff2rom;
 
                 }
                 catch (SecurityException ex)
@@ -59,24 +59,29 @@ namespace WindowsFormsApplication3
 
         private void button2_Click(object sender, EventArgs e)
         {
+
+            bool seedValid = Int32.TryParse(textBox1.Text, out seed);
+
+            if (!seedValid) seed = 0;
+
             if (ff2rom != "null")
             {
                 if (seed == 0)
                 {
                     seed = seedGen.Next();
-                    
+
                 }
                 r = new Random(seed);
-                //
-                filename = Path.GetDirectoryName(ff2rom) + "\\"+seed+"-FF2Randomizer.nes";
+
+                filename = Path.GetDirectoryName(ff2rom) + "\\" + seed + "-FF2Randomizer.nes";
                 File.Copy(ff2rom, filename, true);
-                //
-                if (checkBox1.Checked)
+
+                if (checkBox1.Checked) //FLAG: Shops shuffling sorted by type of shop
                 {
-                    foreach (int i in RandomizerData.iShopLocs) RandomizeShop(i, 0);
-                    foreach (int i in RandomizerData.wShopLocs) RandomizeShop(i, 1);
-                    foreach (int i in RandomizerData.aShopLocs) RandomizeShop(i, 2);
-                    foreach (int i in RandomizerData.mShopLocs) RandomizeShop(i, 3);
+                    foreach (int i in RandomizerData.iShopLocs) RandomizeShop(i, 0); //Randomize all Item Shops with Items Only
+                    foreach (int i in RandomizerData.wShopLocs) RandomizeShop(i, 1); //Randomize all Weapon Shops with Weapons Only
+                    foreach (int i in RandomizerData.aShopLocs) RandomizeShop(i, 2); //Randomize all Armor Shops with Armor Only
+                    foreach (int i in RandomizerData.mShopLocs) RandomizeShop(i, 3); //Randomize all Magic Shops with Magic Only
 
                 }
                 else {
@@ -85,7 +90,7 @@ namespace WindowsFormsApplication3
                     foreach (int i in RandomizerData.aShopLocs) RandomizeShop(i);
                     foreach (int i in RandomizerData.mShopLocs) RandomizeShop(i);
                 }
-                if (checkBox2.Checked)
+                if (checkBox2.Checked) //FLAG: Early Airship
                 {
                     using (var stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite))
                     {
@@ -93,10 +98,42 @@ namespace WindowsFormsApplication3
                         stream.WriteByte(0x04); //Set Airship flag
                         stream.WriteByte(0x5B); //Set Airship X
                         stream.WriteByte(0x76); //Set Airship Y
-                        stream.Position = 0x038c69;
+                        stream.Position = 0x038c69; //Load ROM at Specified Position (Cid's Assistant Confirm JSR)
                         stream.WriteByte(0x60); //Replaces Confirm on Cid's Assistant with an RTS to prevent overwriting the ship.
                     }
                 }
+                if (checkBox3.Checked) //FLAG: Test Mode w/ Firion
+                {
+                    using (var stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite))
+                    {
+                        stream.Position = 0x0F98; //Load ROM at Specified Position (Firion Stats)
+                        stream.WriteByte(0x0F); //Max HP
+                        stream.WriteByte(0x27);
+                        stream.WriteByte(0x0F);
+                        stream.WriteByte(0x27);
+                        stream.WriteByte(0xE7); //Max MP
+                        stream.WriteByte(0x03);
+                        stream.WriteByte(0xE7);
+                        stream.WriteByte(0x03);
+                        stream.WriteByte(0x63); //Max Stats
+                        stream.WriteByte(0x63);
+                        stream.WriteByte(0x63);
+                        stream.WriteByte(0x63);
+                        stream.WriteByte(0x63);
+                        stream.Position = 0x0FAA;
+                        stream.WriteByte(0x83); //Dragon Armor
+                        stream.WriteByte(0x00);
+                        stream.WriteByte(0x60); //Dual Masamune
+                        stream.WriteByte(0x60);
+                        stream.Position = 0x0FB0;
+                        stream.WriteByte(0x63); //Max Stats
+                        stream.WriteByte(0x63);
+                        stream.WriteByte(0x63);
+                        stream.WriteByte(0x63);
+                        stream.WriteByte(0x63);
+                    }
+                }
+                MessageBox.Show("ROM has been Randomized Successfully with a seed of " + seed + "!");
             }
         }
         private void RandomizeShop(int position)
