@@ -1,5 +1,11 @@
 # ChangeNotes
 
+## ChangeNote #3 (03-MAY-19 @ 1:45PM BST)
+
+* Updated Form1.cs
+  * Basic Spoiler Log implemented.
+
+
 ## ChangeNote #2 (02-MAY-19 @ 1:45AM BST)
 
 * Updated Form1.cs

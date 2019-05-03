@@ -18,12 +18,14 @@ namespace WindowsFormsApplication3
         private string ff2rom = "null";
         private byte[] byteCheck = new byte[] { 78, 69, 83, 26, 16, 0, 18, 0 };
         private byte[] byteRead = new byte[8];
-
+        private string version = "ChNo3";
+        private string filename;
         private OpenFileDialog ofd1;
         private Random seedGen = new Random();
+        private StreamWriter sw;
         private int seed = 0;
         private Random r;
-        private string filename;
+        private string filedirectory;
         public Form1()
         {
             InitializeComponent();
@@ -73,11 +75,30 @@ namespace WindowsFormsApplication3
                 }
                 r = new Random(seed);
 
-                filename = Path.GetDirectoryName(ff2rom) + "\\" + seed + "-FF2Randomizer.nes";
-                File.Copy(ff2rom, filename, true);
+                filedirectory = Path.GetDirectoryName(ff2rom);
+                filename = filedirectory + "\\" + seed + "-FF2Randomizer.nes";
+                File.Copy(ff2rom, filename , true);
+                var spoilername = filedirectory + "\\" + seed + "-FF2Randomizer.txt";
+                try
+                {
+                    using(sw = File.CreateText(spoilername))
+                    {
+                        sw.WriteLine("################################");
+                        sw.WriteLine("# Final Fantasy  II Randomizer #");
+                        sw.WriteLine("################################");
+                        sw.WriteLine("Note: The Spoiler Log is heavily in development, and currently pretty much useless without referring to the item data table.");
+                        sw.WriteLine("For more information on the item data table, check out: https://github.com/roryextralife/ProjectPhrasebook/blob/master/Resources/ItemDetails.csv");
+                        sw.WriteLine("Randomizer Version {0}", version);
+                        sw.WriteLine("Seed: {0}", seed);
+                        sw.WriteLine(" -- Flags --");
+                        sw.WriteLine("Items in Shops match Shop Type: {0}", checkBox1.Checked);
+                        sw.WriteLine("Early Airship: {0}", checkBox2.Checked);
+                        sw.WriteLine("Firion Character Booster: {0}", checkBox3.Checked);
+                        sw.WriteLine("----SPOILER LOG STARTS HERE----");
 
                 if (checkBox1.Checked) //FLAG: Shops shuffling sorted by type of shop
                 {
+
                     foreach (int i in RandomizerData.iShopLocs) RandomizeShop(i, 0); //Randomize all Item Shops with Items Only
                     foreach (int i in RandomizerData.wShopLocs) RandomizeShop(i, 1); //Randomize all Weapon Shops with Weapons Only
                     foreach (int i in RandomizerData.aShopLocs) RandomizeShop(i, 2); //Randomize all Armor Shops with Armor Only
@@ -133,6 +154,12 @@ namespace WindowsFormsApplication3
                         stream.WriteByte(0x63);
                     }
                 }
+                    }
+                }
+                catch (Exception Ex)
+                {
+                    MessageBox.Show(Ex.ToString());
+                }
                 MessageBox.Show("ROM has been Randomized Successfully with a seed of " + seed + "!");
             }
         }
@@ -140,10 +167,12 @@ namespace WindowsFormsApplication3
         {
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite))
             {
+                sw.WriteLine("Shop Address: {0}", position.ToString("X"));
                 stream.Position = position; //Load ROM at Specified Position (Shop)
                 for (int j = 0; j < 4; j++) //For Each Shop Item
                 {
                     int i = 2 * r.Next(0, 0xA8); //Pick Random Item
+                    sw.WriteLine("Item {0}: {1}", j+1, RandomizerData.items[i].ToString("X"));
                     stream.WriteByte(RandomizerData.items[i]); //Set Item Byte
                     stream.WriteByte(RandomizerData.items[i + 1]); //Set Price Byte
                 }
@@ -189,10 +218,12 @@ namespace WindowsFormsApplication3
             }
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite))
             {
+                sw.WriteLine("Shop Address: {0}", position.ToString("X"));
                 stream.Position = position; //Load ROM at Specified Position (Shop)
                 for (int j = 0; j < 4; j++) //For Each Shop Item
                 {
                     int i = 2 * r.Next(min, max); //Pick Random Item
+                    sw.WriteLine("Item {0}: {1}", j+1, RandomizerData.items[i].ToString("X"));
                     stream.WriteByte(RandomizerData.items[i]); //Set Item Byte
                     stream.WriteByte(RandomizerData.items[i + 1]); //Set Price Byte
                 }
